@@ -1,8 +1,8 @@
-package usecase_test
+package generators_test
 
 import (
-	"github.com/VictorMarcolino/golang-struct-to-io-ts/pkg/core/usecase"
-	"github.com/VictorMarcolino/golang-struct-to-io-ts/pkg/core/utils"
+	usecase2 "github.com/VictorMarcolino/golang-struct-to-io-ts/generators"
+	"github.com/VictorMarcolino/golang-struct-to-io-ts/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
@@ -13,7 +13,7 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 			Age int `json:"age"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -28,7 +28,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Name string `json:"name"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -43,7 +43,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			IsActive bool `json:"is_active"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -58,7 +58,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Price float64 `json:"price"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -73,7 +73,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Count uint `json:"count"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -88,7 +88,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			ZipCode *string `json:"zip_code"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -103,7 +103,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Score *int `json:"score"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -118,7 +118,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Tags []string `json:"tags"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -133,7 +133,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Scores []*int `json:"scores"`
 		}
 		user := SimpleCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -154,7 +154,7 @@ var _ = Describe("IO-TS:Nested Cases", func() {
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -183,7 +183,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -212,7 +212,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -241,7 +241,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -270,7 +270,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -299,7 +299,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -328,7 +328,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -357,7 +357,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -386,7 +386,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -415,7 +415,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -445,7 +445,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator(usecase.TypeScriptGeneratorOptions{
+		generator := usecase2.NewIoTsGenerator(usecase2.TypeScriptGeneratorOptions{
 			TreatArraysAsOptional: true,
 		})
 		result, err := generator.Generate(user)
@@ -512,7 +512,7 @@ var _ = Describe("IO-TS:Complex Cases", func() {
 		}
 
 		user := Character{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -577,7 +577,7 @@ var _ = Describe("IO-TS:Special Cases", func() {
 			Data map[string]interface{} `json:"data"`
 		}
 		user := SpecialCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -597,7 +597,7 @@ export type SpecialCase = t.TypeOf<typeof SpecialCaseC>;
 			Data map[string]interface{} `json:"data,omitempty"`
 		}
 		user := SpecialCase{}
-		generator := usecase.NewIoTsGenerator()
+		generator := usecase2.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `

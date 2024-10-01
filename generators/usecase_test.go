@@ -1,4 +1,4 @@
-package usecase_test
+package generators_test
 
 import (
 	"testing"

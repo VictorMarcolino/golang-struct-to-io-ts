@@ -1,4 +1,4 @@
-package usecase
+package generators
 
 import (
 	"fmt"
@@ -8,6 +8,17 @@ import (
 
 // IoTsGenerator encapsulates the logic to generate io-ts types
 type IoTsGenerator struct {
+	generatedStructs map[string]bool
+	options          TypeScriptGeneratorOptions
+}
+
+// TypeScriptGeneratorOptions defines options for generating TypeScript interfaces
+type TypeScriptGeneratorOptions struct {
+	TreatArraysAsOptional bool
+}
+
+// TypeScriptGenerator encapsulates the logic to generate TypeScript interfaces
+type TypeScriptGenerator struct {
 	generatedStructs map[string]bool
 	options          TypeScriptGeneratorOptions
 }
@@ -176,4 +187,12 @@ func (g *IoTsGenerator) dereferenceType(t reflect.Type) reflect.Type {
 		return t.Elem()
 	}
 	return t
+}
+
+// isStructType checks if the given type is a struct or a pointer to a struct
+func isStructType(t reflect.Type) bool {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t.Kind() == reflect.Struct
 }

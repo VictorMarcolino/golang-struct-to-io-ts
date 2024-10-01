@@ -4,7 +4,6 @@ This project provides a generator that automatically converts Go structs into Ty
 
 ## Features
 
-- **TypeScript Interface Generator**: Converts Go structs into TypeScript interfaces.
 - **io-ts Generator**: Converts Go structs into `io-ts` runtime types, ensuring type-safe data validation in JavaScript/TypeScript.
 - **Optional Fields Handling**: Supports pointer and array types, marking fields as optional in TypeScript and `io-ts` when appropriate.
 - **Nested Structs**: Recursively generates types for deeply nested Go structs.
@@ -13,17 +12,14 @@ This project provides a generator that automatically converts Go structs into Ty
 ## Project Structure
 
 ```
-pkg/
-│
-├── core/
-│   ├── utils/
-│   │   └── utils.go  # Utility functions
-│   ├── usecase/
-│   │   ├── generate-ts-interface.go  # TypeScript interface generator
-│   │   ├── generate-io-ts.go         # io-ts type generator
-│   │   ├── usecase_test.go           # Test runner configuration
-│   │   ├── generate-ts-interface_test.go  # TypeScript interface generator tests
-│   │   └── generate-io-ts_test.go         # io-ts type generator tests
+├── utils/
+│   └── utils.go  # Utility functions
+├── generators/
+    ├── generate-ts-interface.go  # TypeScript interface generator
+    ├── generate-io-ts.go         # io-ts type generator
+    ├── usecase_test.go           # Test runner configuration
+    ├── generate-ts-interface_test.go  # TypeScript interface generator tests
+    └── generate-io-ts_test.go         # io-ts type generator tests
 ```
 
 ## Installation
@@ -39,46 +35,6 @@ pkg/
 
 ## Usage
 
-### Generate TypeScript Interfaces
-
-You can generate TypeScript interfaces based on your Go structs by creating a `TypeScriptGenerator` and passing in the struct.
-
-```go
-package main
-
-import (
-    "fmt"
-    "github.com/VictorMarcolino/golang-struct-to-io-ts/pkg/core/usecase"
-)
-
-func main() {
-    type User struct {
-        Name  string `json:"name"`
-        Age   int    `json:"age"`
-        Email string `json:"email"`
-    }
-
-    generator := usecase.NewTypeScriptGenerator()
-    result, err := generator.Generate(User{})
-    
-    if err != nil {
-        fmt.Println("Error:", err)
-    } else {
-        fmt.Println(result)
-    }
-}
-```
-
-This will output:
-
-```typescript
-interface User {
-  name: string;
-  age: number;
-  email: string;
-}
-```
-
 ### Generate `io-ts` Types
 
 Similarly, you can generate `io-ts` types by using `IoTsGenerator`.
@@ -88,7 +44,7 @@ package main
 
 import (
     "fmt"
-    "github.com/VictorMarcolino/golang-struct-to-io-ts/pkg/core/usecase"
+    "github.com/VictorMarcolino/golang-struct-to-io-ts/generators"
 )
 
 func main() {
@@ -98,7 +54,7 @@ func main() {
         Email string `json:"email"`
     }
 
-    generator := usecase.NewIoTsGenerator()
+    generator := generators.NewIoTsGenerator()
     result, err := generator.Generate(User{})
     
     if err != nil {
@@ -112,11 +68,14 @@ func main() {
 This will output:
 
 ```typescript
-const User = t.type({
+import * as t from 'io-ts';
+
+export const UserC = t.type({
   name: t.string,
   age: t.number,
   email: t.string,
 });
+export type User = t.TypeOf<typeof UserC>;
 ```
 
 ### Handling Optional Fields
@@ -124,7 +83,7 @@ const User = t.type({
 Fields that are pointers in Go will be marked as optional in both TypeScript and `io-ts`. Additionally, you can pass the `TreatArraysAsOptional` option to the generator to mark arrays as optional if needed.
 
 ```go
-generator := usecase.NewIoTsGenerator(usecase.TypeScriptGeneratorOptions{TreatArraysAsOptional: true})
+generator := generators.NewIoTsGenerator(generators.TypeScriptGeneratorOptions{TreatArraysAsOptional: true})
 ```
 
 ## Running Tests
@@ -132,7 +91,7 @@ generator := usecase.NewIoTsGenerator(usecase.TypeScriptGeneratorOptions{TreatAr
 The project uses [Ginkgo](https://onsi.github.io/ginkgo/) and [Gomega](https://onsi.github.io/gomega/) for testing. You can run the tests by executing:
 
 ```bash
-go test ./...
+ginkgo run -r
 ```
 
 The test suite covers a variety of cases, including simple types, nested structs, pointer fields, and more complex Go structs with slices and enums.
@@ -149,7 +108,7 @@ It("should generate correct TypeScript for int field", func() {
         Age int `json:"age"`
     }
     user := SimpleCase{}
-    generator := usecase.NewTypeScriptGenerator()
+    generator := generators.NewTypeScriptGenerator()
     result, err := generator.Generate(user)
     expected := `interface SimpleCase { age: number; }`
     Expect(err).To(BeNil())
@@ -170,7 +129,7 @@ It("should generate correct TypeScript for nested struct with int field", func()
         Children NestedCaseChildren `json:"children"`
     }
     user := NestedCaseFather{}
-    generator := usecase.NewTypeScriptGenerator()
+    generator := generators.NewTypeScriptGenerator()
     result, err := generator.Generate(user)
     expected := `interface NestedCaseChildren { age: number; } interface NestedCaseFather { children: NestedCaseChildren; }`
     Expect(err).To(BeNil())
@@ -178,7 +137,7 @@ It("should generate correct TypeScript for nested struct with int field", func()
 })
 ```
 
-### Hard Complete Test (Inspired by *Skyrim*)
+### Hard Complete Test
 
 A complex test with deeply nested structs, optional fields, arrays, and pointers.
 
@@ -224,48 +183,56 @@ It("Hard Complete Test: should convert a complete struct with at least 4 childre
     }
 
     user := Character{}
-    generator := usecase.NewIoTsGenerator()
+    generator := generators.NewIoTsGenerator()
     result, err := generator.Generate(user)
 
     expected := `
-const Weapon = t.type({
+import * as t from 'io-ts';
+
+export const WeaponC = t.type({
   name: t.string,
   damage: t.number,
   enchanted: t.boolean,
   enchantment: t.union([t.string, t.undefined]),
 });
+export type Weapon = t.TypeOf<typeof WeaponC>;
 
-const Inventory = t.type({
-  weapons: t.array(Weapon),
+export const InventoryC = t.type({
+  weapons: t.array(WeaponC),
   gold: t.number,
   lockpicks: t.union([t.number, t.undefined]),
   potions: t.array(t.string),
 });
+export type Inventory = t.TypeOf<typeof InventoryC>;
 
-const QuestStatus = t.type({
+export const QuestStatusC = t.type({
   active: t.boolean,
   progress: t.string,
 });
+export type QuestStatus = t.TypeOf<typeof QuestStatusC>;
 
-const Quest = t.type({
+export const QuestC = t.type({
   title: t.string,
-  status: QuestStatus,
+  status: QuestStatusC,
 });
+export type Quest = t.TypeOf<typeof QuestC>;
 
-const Skill = t.type({
+export const SkillC = t.type({
   name: t.string,
   level: t.number,
 });
+export type Skill = t.TypeOf<typeof SkillC>;
 
-const Character = t.type({
+export const CharacterC = t.type({
   name: t.string,
   race: t.string,
   health: t.number,
   stamina: t.union([t.number, t.undefined]),
-  inventory: Inventory,
-  quests: t.array(Quest),
-  skills: t.array(Skill),
+  inventory: InventoryC,
+  quests: t.array(QuestC),
+  skills: t.array(SkillC),
 });
+export type Character = t.TypeOf<typeof CharacterC>;
 `
     Expect(err).To(BeNil())
     Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))

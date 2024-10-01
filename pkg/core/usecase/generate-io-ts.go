@@ -36,6 +36,8 @@ func (g *IoTsGenerator) Generate(inputStruct interface{}) (string, error) {
 	}
 
 	var interfaces strings.Builder
+
+	interfaces.WriteString("import * as t from 'io-ts';\n\n")
 	g.processStruct(t, &interfaces)
 	return interfaces.String(), nil
 }
@@ -70,7 +72,7 @@ func (g *IoTsGenerator) processStruct(t reflect.Type, interfaces *strings.Builde
 	g.markStructProcessed(t)
 
 	// Then generate the io-ts type for the current struct
-	interfaces.WriteString(fmt.Sprintf("const %s = t.type({\n", t.Name()))
+	interfaces.WriteString(fmt.Sprintf("export const %sC = t.type({\n", t.Name()))
 
 	// Process each field of the struct
 	for i := 0; i < t.NumField(); i++ {
@@ -80,7 +82,7 @@ func (g *IoTsGenerator) processStruct(t reflect.Type, interfaces *strings.Builde
 		}
 	}
 
-	interfaces.WriteString("});\n\n")
+	interfaces.WriteString(fmt.Sprintf("});\nexport type %s = t.TypeOf<typeof %sC>;\n\n", t.Name(), t.Name()))
 }
 
 // processField processes a single field and adds it to the io-ts type
@@ -136,7 +138,7 @@ func goTypeToIoTSType(goType reflect.Type, isOptional bool) string {
 	case reflect.Ptr:
 		return goTypeToIoTSType(goType.Elem(), true)
 	case reflect.Struct:
-		return fmt.Sprintf("%s", goType.Name())
+		return fmt.Sprintf("%sC", goType.Name())
 	default:
 		return "t.unknown"
 	}

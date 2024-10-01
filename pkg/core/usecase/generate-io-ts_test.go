@@ -15,7 +15,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ age: t.number, });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ age: t.number, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -27,7 +30,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ name: t.string, });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ name: t.string, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -39,7 +45,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ is_active: t.boolean, });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ is_active: t.boolean, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -51,7 +60,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ price: t.number, });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ price: t.number, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -63,7 +75,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ count: t.number, });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ count: t.number, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -75,7 +90,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ zip_code: t.union([t.string, t.undefined]), });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ zip_code: t.union([t.string, t.undefined]), });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -87,7 +105,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ score: t.union([t.number, t.undefined]), });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ score: t.union([t.number, t.undefined]), });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -99,7 +120,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ tags: t.array(t.string), });`
+		expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ tags: t.array(t.string), });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -111,8 +135,10 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 		user := SimpleCase{}
 		generator := usecase.NewIoTsGenerator()
 		result, err := generator.Generate(user)
-		expected := `const SimpleCase = t.type({ scores: t.array(t.union([t.number, t.undefined])), });`
+		expected := `import * as t from 'io-ts';
 
+export const SimpleCaseC = t.type({ scores: t.array(t.union([t.number, t.undefined])), });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -132,13 +158,17 @@ var _ = Describe("IO-TS:Nested Cases", func() {
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   age: t.number,
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -157,13 +187,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   name: t.string,
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -182,13 +216,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   is_active: t.boolean,
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -207,13 +245,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   salary: t.number,
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -232,13 +274,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   count: t.number,
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -257,13 +303,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   zip_code: t.union([t.string, t.undefined]),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -282,13 +332,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   tags: t.array(t.string),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -307,13 +361,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   scores: t.array(t.union([t.number, t.undefined])),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: NestedCaseChildren,
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -332,13 +390,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   scores: t.array(t.union([t.number, t.undefined])),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: t.array(NestedCaseChildren),
+export const NestedCaseFatherC = t.type({
+  children: t.array(NestedCaseChildrenC),
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -357,13 +419,17 @@ const NestedCaseFather = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   scores: t.array(t.union([t.number, t.undefined])),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: t.array(t.union([NestedCaseChildren, t.undefined])),
+export const NestedCaseFatherC = t.type({
+  children: t.array(t.union([NestedCaseChildrenC, t.undefined])),
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -373,22 +439,31 @@ const NestedCaseFather = t.type({
 		type NestedCaseChildren struct {
 			Scores []*int `json:"scores"`
 		}
+
 		type NestedCaseFather struct {
 			Children []*NestedCaseChildren `json:"children"`
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase.NewIoTsGenerator(usecase.TypeScriptGeneratorOptions{TreatArraysAsOptional: true})
+		generator := usecase.NewIoTsGenerator(usecase.TypeScriptGeneratorOptions{
+			TreatArraysAsOptional: true,
+		})
 		result, err := generator.Generate(user)
 
 		expected := `
-const NestedCaseChildren = t.type({
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
   scores: t.union([t.array(t.union([t.number, t.undefined])), t.undefined]),
 });
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
 
-const NestedCaseFather = t.type({
-  children: t.union([t.array(t.union([NestedCaseChildren, t.undefined])), t.undefined]),
+export const NestedCaseFatherC = t.type({
+  children: t.union([t.array(t.union([NestedCaseChildrenC, t.undefined])), t.undefined]),
 });
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
+
+
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -441,44 +516,52 @@ var _ = Describe("IO-TS:Complex Cases", func() {
 		result, err := generator.Generate(user)
 
 		expected := `
-const Weapon = t.type({
+import * as t from 'io-ts';
+
+export const WeaponC = t.type({
   name: t.string,
   damage: t.number,
   enchanted: t.boolean,
   enchantment: t.union([t.string, t.undefined]),
 });
+export type Weapon = t.TypeOf<typeof WeaponC>;
 
-const Inventory = t.type({
-  weapons: t.array(Weapon),
+export const InventoryC = t.type({
+  weapons: t.array(WeaponC),
   gold: t.number,
   lockpicks: t.union([t.number, t.undefined]),
   potions: t.array(t.string),
 });
+export type Inventory = t.TypeOf<typeof InventoryC>;
 
-const QuestStatus = t.type({
+export const QuestStatusC = t.type({
   active: t.boolean,
   progress: t.string,
 });
+export type QuestStatus = t.TypeOf<typeof QuestStatusC>;
 
-const Quest = t.type({
+export const QuestC = t.type({
   title: t.string,
-  status: QuestStatus,
+  status: QuestStatusC,
 });
+export type Quest = t.TypeOf<typeof QuestC>;
 
-const Skill = t.type({
+export const SkillC = t.type({
   name: t.string,
   level: t.number,
 });
+export type Skill = t.TypeOf<typeof SkillC>;
 
-const Character = t.type({
+export const CharacterC = t.type({
   name: t.string,
   race: t.string,
   health: t.number,
   stamina: t.union([t.number, t.undefined]),
-  inventory: Inventory,
-  quests: t.array(Quest),
-  skills: t.array(Skill),
+  inventory: InventoryC,
+  quests: t.array(QuestC),
+  skills: t.array(SkillC),
 });
+export type Character = t.TypeOf<typeof CharacterC>;
 `
 
 		Expect(err).To(BeNil())
@@ -498,9 +581,12 @@ var _ = Describe("IO-TS:Special Cases", func() {
 		result, err := generator.Generate(user)
 
 		expected := `
-const SpecialCase = t.type({
+import * as t from 'io-ts';
+
+export const SpecialCaseC = t.type({
   data: t.record(t.string, t.unknown),
 });
+export type SpecialCase = t.TypeOf<typeof SpecialCaseC>;
 `
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
@@ -515,16 +601,15 @@ const SpecialCase = t.type({
 		result, err := generator.Generate(user)
 
 		expected := `
-const SpecialCase = t.type({
+import * as t from 'io-ts';
+
+export const SpecialCaseC = t.type({
   data: t.union([t.record(t.string, t.unknown), t.undefined]),
 });
+export type SpecialCase = t.TypeOf<typeof SpecialCaseC>;
 `
 
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
 })
-
-// Handle with map[string]interface{} fields
-// Bug: When 	NetworkFunctionLifecycleManagement map[string]interface{}            `json:"networkFunctionLifecycleManagement,omitempty" bson:"networkFunctionLifecycleManagement"` it produces
-// networkFunctionLifecycleManagement, omitempty: t.unknown,

@@ -1,25 +1,24 @@
-# Golang Struct to io-ts/TypeScript Generator
+# Golang Struct to io-ts Generator
 
-This project provides a generator that automatically converts Go structs into TypeScript interfaces and `io-ts` types. This tool is particularly useful for projects that need to ensure type safety between backend Go services and frontend TypeScript applications by generating shared types based on Go struct definitions.
+This project provides a generator that automatically converts Go structs into `io-ts` types. This tool is particularly useful for projects that need to ensure type safety between backend Go services and frontend TypeScript applications by generating shared types based on Go struct definitions.
 
 ## Features
 
 - **io-ts Generator**: Converts Go structs into `io-ts` runtime types, ensuring type-safe data validation in JavaScript/TypeScript.
-- **Optional Fields Handling**: Supports pointer and array types, marking fields as optional in TypeScript and `io-ts` when appropriate.
+- **Optional Fields Handling**: Supports pointer and array types, marking fields as optional in `io-ts` when appropriate.
 - **Nested Structs**: Recursively generates types for deeply nested Go structs.
-- **Enums Handling**: Converts Go enumerators into TypeScript and `io-ts` unions.
+- **Inlined Fields**: Supports Go struct fields that are inlined using the `json:",inline"` tag.
+- **Special Cases Handling**: Handles special cases like `map[string]interface{}` by generating appropriate `io-ts` types.
 
 ## Project Structure
 
 ```
 ├── utils/
-│   └── utils.go  # Utility functions
-├── generators/
-    ├── generate-ts-interface.go  # TypeScript interface generator
-    ├── generate-io-ts.go         # io-ts type generator
-    ├── usecase_test.go           # Test runner configuration
-    ├── generate-ts-interface_test.go  # TypeScript interface generator tests
-    └── generate-io-ts_test.go         # io-ts type generator tests
+│   └── utils.go                 # Utility functions
+└── generators/
+    ├── generate-io-ts.go        # io-ts type generator
+    ├── generate-io-ts_test.go   # io-ts type generator tests
+    └── usecase_test.go          # Test runner configuration
 ```
 
 ## Installation
@@ -28,7 +27,11 @@ This project provides a generator that automatically converts Go structs into Ty
    ```bash
    git clone https://github.com/VictorMarcolino/golang-struct-to-io-ts.git
    ```
-2. Install dependencies:
+2. Navigate to the project directory:
+   ```bash
+   cd golang-struct-to-io-ts
+   ```
+3. Install dependencies:
    ```bash
    go mod tidy
    ```
@@ -37,7 +40,7 @@ This project provides a generator that automatically converts Go structs into Ty
 
 ### Generate `io-ts` Types
 
-Similarly, you can generate `io-ts` types by using `IoTsGenerator`.
+You can generate `io-ts` types by using `IoTsGenerator`.
 
 ```go
 package main
@@ -56,7 +59,7 @@ func main() {
 
     generator := generators.NewIoTsGenerator()
     result, err := generator.Generate(User{})
-    
+
     if err != nil {
         fmt.Println("Error:", err)
     } else {
@@ -80,11 +83,15 @@ export type User = t.TypeOf<typeof UserC>;
 
 ### Handling Optional Fields
 
-Fields that are pointers in Go will be marked as optional in both TypeScript and `io-ts`. Additionally, you can pass the `TreatArraysAsOptional` option to the generator to mark arrays as optional if needed.
+Fields that are pointers in Go will be marked as optional in `io-ts`. Additionally, you can pass the `TreatArraysAsOptional` option to the generator to mark arrays as optional if needed.
 
 ```go
 generator := generators.NewIoTsGenerator(generators.TypeScriptGeneratorOptions{TreatArraysAsOptional: true})
 ```
+
+### Handling Inlined Fields
+
+The generator supports Go struct fields that are inlined using the `json:",inline"` tag. Inlined fields will have their fields merged into the parent struct in the generated `io-ts` type.
 
 ## Running Tests
 
@@ -94,7 +101,7 @@ The project uses [Ginkgo](https://onsi.github.io/ginkgo/) and [Gomega](https://o
 ginkgo run -r
 ```
 
-The test suite covers a variety of cases, including simple types, nested structs, pointer fields, and more complex Go structs with slices and enums.
+The test suite covers a variety of cases, including simple types, nested structs, pointer fields, inlined fields, and more complex Go structs with slices and maps.
 
 ## Example Tests
 
@@ -103,14 +110,17 @@ The test suite covers a variety of cases, including simple types, nested structs
 Tests for basic Go types like `int`, `string`, and `bool`.
 
 ```go
-It("should generate correct TypeScript for int field", func() {
+It("should generate correct io-ts type for int field", func() {
     type SimpleCase struct {
         Age int `json:"age"`
     }
     user := SimpleCase{}
-    generator := generators.NewTypeScriptGenerator()
+    generator := generators.NewIoTsGenerator()
     result, err := generator.Generate(user)
-    expected := `interface SimpleCase { age: number; }`
+    expected := `import * as t from 'io-ts';
+
+export const SimpleCaseC = t.type({ age: t.number, });
+export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
     Expect(err).To(BeNil())
     Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 })
@@ -118,10 +128,10 @@ It("should generate correct TypeScript for int field", func() {
 
 ### Nested Structs
 
-Tests for generating interfaces and types for nested Go structs.
+Tests for generating `io-ts` types for nested Go structs.
 
 ```go
-It("should generate correct TypeScript for nested struct with int field", func() {
+It("should generate correct io-ts type for nested struct with int field", func() {
     type NestedCaseChildren struct {
         Age int `json:"age"`
     }
@@ -129,15 +139,27 @@ It("should generate correct TypeScript for nested struct with int field", func()
         Children NestedCaseChildren `json:"children"`
     }
     user := NestedCaseFather{}
-    generator := generators.NewTypeScriptGenerator()
+    generator := generators.NewIoTsGenerator()
     result, err := generator.Generate(user)
-    expected := `interface NestedCaseChildren { age: number; } interface NestedCaseFather { children: NestedCaseChildren; }`
+    expected := `
+import * as t from 'io-ts';
+
+export const NestedCaseChildrenC = t.type({
+  age: t.number,
+});
+export type NestedCaseChildren = t.TypeOf<typeof NestedCaseChildrenC>;
+
+export const NestedCaseFatherC = t.type({
+  children: NestedCaseChildrenC,
+});
+export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
+`
     Expect(err).To(BeNil())
     Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 })
 ```
 
-### Hard Complete Test
+### Complex Test
 
 A complex test with deeply nested structs, optional fields, arrays, and pointers.
 
@@ -231,6 +253,61 @@ export const CharacterC = t.type({
   inventory: InventoryC,
   quests: t.array(QuestC),
   skills: t.array(SkillC),
+});
+export type Character = t.TypeOf<typeof CharacterC>;
+`
+    Expect(err).To(BeNil())
+    Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+})
+```
+
+### Handling Inlined Fields
+
+Tests for structs with inlined fields using the `json:",inline"` tag.
+
+```go
+It("should generate correct io-ts type for a struct with inline nested structs and optional fields", func() {
+    type Attributes struct {
+        Strength     int  `json:"strength"`
+        Agility      *int `json:"agility,omitempty"` // Optional
+        Intelligence int  `json:"intelligence"`
+    }
+
+    type Inventory struct {
+        Gold    int        `json:"gold"`
+        Items   []string   `json:"items"`
+        Weapons []struct { // Inline weapons struct
+            Name      string `json:"name"`
+            Damage    int    `json:"damage"`
+            Enchanted bool   `json:"enchanted"`
+        } `json:"weapons"`
+    }
+
+    type Character struct {
+        Name       string     `json:"name"`
+        Attributes Attributes `json:",inline"` // This struct is inlined
+        Inventory  Inventory  `json:",inline"` // This struct is inlined
+    }
+
+    user := Character{}
+    generator := generators.NewIoTsGenerator()
+    result, err := generator.Generate(user)
+
+    expected := `
+import * as t from 'io-ts';
+
+export const CharacterC = t.type({
+  name: t.string,
+  strength: t.number,
+  agility: t.union([t.number, t.undefined]),
+  intelligence: t.number,
+  gold: t.number,
+  items: t.array(t.string),
+  weapons: t.array(t.type({
+    name: t.string,
+    damage: t.number,
+    enchanted: t.boolean,
+  })),
 });
 export type Character = t.TypeOf<typeof CharacterC>;
 `

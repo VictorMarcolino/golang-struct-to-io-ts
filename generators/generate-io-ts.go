@@ -6,193 +6,331 @@ import (
 	"strings"
 )
 
-// IoTsGenerator encapsulates the logic to generate io-ts types
-type IoTsGenerator struct {
-	generatedStructs map[string]bool
-	options          TypeScriptGeneratorOptions
-}
-
 // TypeScriptGeneratorOptions defines options for generating TypeScript interfaces
 type TypeScriptGeneratorOptions struct {
 	TreatArraysAsOptional bool
 }
 
-// TypeScriptGenerator encapsulates the logic to generate TypeScript interfaces
-type TypeScriptGenerator struct {
-	generatedStructs map[string]bool
-	options          TypeScriptGeneratorOptions
+// TypeConverter defines an interface for converting Go types to io-ts types
+type TypeConverter interface {
+	Convert(goType reflect.Type, isOptional bool) string
 }
 
-// NewIoTsGenerator creates a new instance of IoTsGenerator with the provided options
-func NewIoTsGenerator(options ...TypeScriptGeneratorOptions) *IoTsGenerator {
-	chosenOptions := TypeScriptGeneratorOptions{
-		TreatArraysAsOptional: false,
+// FieldProcessor defines an interface for processing struct fields
+type FieldProcessor interface {
+	ProcessField(field reflect.StructField) string
+	ProcessInlineField(field reflect.StructField) []string
+}
+
+// CodeBuilder handles the assembly of generated code
+type CodeBuilder struct {
+	imports         []string
+	typeDefinitions []string
+	processedTypes  map[string]struct{}
+}
+
+// NewCodeBuilder creates a new CodeBuilder instance
+func NewCodeBuilder() *CodeBuilder {
+	return &CodeBuilder{
+		imports:         []string{"import * as t from 'io-ts';\n\n"},
+		typeDefinitions: []string{},
+		processedTypes:  make(map[string]struct{}),
 	}
+}
+
+// AddTypeDefinition adds a type definition to the builder
+func (cb *CodeBuilder) AddTypeDefinition(typeDef string) {
+	cb.typeDefinitions = append(cb.typeDefinitions, typeDef)
+}
+
+// IsTypeProcessed checks if a type has already been processed
+func (cb *CodeBuilder) IsTypeProcessed(typeKey string) bool {
+	_, exists := cb.processedTypes[typeKey]
+	return exists
+}
+
+// MarkTypeProcessed marks a type as processed
+func (cb *CodeBuilder) MarkTypeProcessed(typeKey string) {
+	cb.processedTypes[typeKey] = struct{}{}
+}
+
+// Build assembles the final code output
+func (cb *CodeBuilder) Build() string {
+	var sb strings.Builder
+	for _, imp := range cb.imports {
+		sb.WriteString(imp)
+	}
+	for _, typeDef := range cb.typeDefinitions {
+		sb.WriteString(typeDef)
+	}
+	return sb.String()
+}
+
+// DefaultTypeConverter is the default implementation of TypeConverter
+type DefaultTypeConverter struct {
+	generator *IoTsGenerator
+}
+
+// Convert converts a Go type to its corresponding io-ts type
+func (tc *DefaultTypeConverter) Convert(goType reflect.Type, isOptional bool) string {
+	goType = dereferenceType(goType)
+
+	// Special case for map[string]interface{}
+	if goType.Kind() == reflect.Map && goType.Key().Kind() == reflect.String && goType.Elem().Kind() == reflect.Interface {
+		ioTsType := "t.record(t.string, t.unknown)"
+		return wrapOptional(ioTsType, isOptional)
+	}
+
+	var ioTsType string
+
+	switch goType.Kind() {
+	case reflect.String:
+		ioTsType = "t.string"
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64:
+		ioTsType = "t.number"
+	case reflect.Bool:
+		ioTsType = "t.boolean"
+	case reflect.Slice, reflect.Array:
+		elementType := goType.Elem()
+		// Check if the element is a pointer
+		isElementOptional := elementType.Kind() == reflect.Ptr
+		elementIoTsType := tc.Convert(elementType, isElementOptional)
+		ioTsType = fmt.Sprintf("t.array(%s)", elementIoTsType)
+	case reflect.Struct:
+		typeName := goType.Name()
+		if typeName == "" {
+			// Anonymous struct, generate inline type
+			inlineType := tc.generator.generateInlineStruct(goType)
+			ioTsType = inlineType
+		} else {
+			tc.generator.processStruct(goType)
+			ioTsType = fmt.Sprintf("%sC", typeName)
+		}
+	default:
+		ioTsType = "t.unknown"
+	}
+
+	return wrapOptional(ioTsType, isOptional)
+}
+
+// IoTsGenerator encapsulates the logic to generate io-ts types
+type IoTsGenerator struct {
+	options       TypeScriptGeneratorOptions
+	typeConverter TypeConverter
+	codeBuilder   *CodeBuilder
+}
+
+// NewIoTsGenerator creates a new instance of NewIoTsGenerator with the provided options
+func NewIoTsGenerator(options ...TypeScriptGeneratorOptions) *IoTsGenerator {
+	chosenOptions := TypeScriptGeneratorOptions{}
 	if len(options) != 0 {
 		chosenOptions = options[0]
 	}
-	return &IoTsGenerator{
-		generatedStructs: make(map[string]bool),
-		options:          chosenOptions,
+	generator := &IoTsGenerator{
+		options:     chosenOptions,
+		codeBuilder: NewCodeBuilder(),
 	}
+	generator.typeConverter = &DefaultTypeConverter{generator: generator}
+	return generator
 }
 
 // Generate takes any struct and generates its corresponding io-ts type
 func (g *IoTsGenerator) Generate(inputStruct interface{}) (string, error) {
 	t := reflect.TypeOf(inputStruct)
+	t = dereferenceType(t)
 
-	// Ensure the input is a struct
 	if t.Kind() != reflect.Struct {
 		return "", fmt.Errorf("input is not a struct")
 	}
 
-	var interfaces strings.Builder
-
-	interfaces.WriteString("import * as t from 'io-ts';\n\n")
-	g.processStruct(t, &interfaces)
-	return interfaces.String(), nil
+	g.processStruct(t)
+	return g.codeBuilder.Build(), nil
 }
 
 // processStruct processes a struct and generates its io-ts type
-func (g *IoTsGenerator) processStruct(t reflect.Type, interfaces *strings.Builder) {
-	// Dereference pointer types
-	t = g.dereferenceType(t)
+func (g *IoTsGenerator) processStruct(t reflect.Type) {
+	t = dereferenceType(t)
 
-	// Avoid reprocessing the same struct
-	if g.isStructProcessed(t) {
+	typeKey := getTypeKey(t)
+	if g.codeBuilder.IsTypeProcessed(typeKey) || t.Name() == "" {
 		return
 	}
 
-	// First, recursively process any nested structs or elements of a slice
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		fieldType := g.dereferenceType(field.Type)
-
-		// If the field is a slice, process the element type (recursively handle nested structs)
-		if fieldType.Kind() == reflect.Slice {
-			elementType := g.dereferenceType(fieldType.Elem())
-			if isStructType(elementType) {
-				g.processStruct(elementType, interfaces) // Process child structs inside slices
-			}
-		} else if isStructType(fieldType) {
-			g.processStruct(fieldType, interfaces) // Process regular child structs
-		}
-	}
-
-	// Now mark the current struct as processed
-	g.markStructProcessed(t)
-
-	// Then generate the io-ts type for the current struct
-	interfaces.WriteString(fmt.Sprintf("export const %sC = t.type({\n", t.Name()))
-
-	// Process each field of the struct
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-		if jsonTag := field.Tag.Get("json"); jsonTag != "" && jsonTag != "-" {
-			g.processField(field, interfaces)
-		}
-	}
-
-	interfaces.WriteString(fmt.Sprintf("});\nexport type %s = t.TypeOf<typeof %sC>;\n\n", t.Name(), t.Name()))
+	g.processNestedStructs(t)
+	g.codeBuilder.MarkTypeProcessed(typeKey)
+	typeDef := g.generateIoTsType(t)
+	g.codeBuilder.AddTypeDefinition(typeDef)
 }
 
-// processField processes a single field and adds it to the io-ts type
-func (g *IoTsGenerator) processField(field reflect.StructField, interfaces *strings.Builder) {
-	jsonTag := field.Tag.Get("json")
+// processNestedStructs processes nested structs within a parent struct
+func (g *IoTsGenerator) processNestedStructs(t reflect.Type) {
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if g.shouldSkipField(field) {
+			continue
+		}
 
-	// Extract the field name (ignore ",omitempty" or other options)
+		fieldType := dereferenceType(field.Type)
+
+		if isStructType(fieldType) {
+			if strings.Contains(field.Tag.Get("json"), ",inline") {
+				g.processNestedStructs(fieldType)
+			} else if fieldType.Name() == "" {
+				// Anonymous struct
+				g.typeConverter.Convert(fieldType, g.isFieldOptional(field))
+			} else {
+				g.processStruct(fieldType)
+			}
+		} else if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
+			elementType := dereferenceType(fieldType.Elem())
+			if isStructType(elementType) {
+				if elementType.Name() == "" {
+					// Anonymous struct
+					g.typeConverter.Convert(elementType, false)
+				} else {
+					g.processStruct(elementType)
+				}
+			}
+		}
+	}
+}
+
+// generateIoTsType generates the io-ts type for a struct and returns it as a string
+func (g *IoTsGenerator) generateIoTsType(t reflect.Type) string {
+	var fields []string
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if g.shouldSkipField(field) {
+			continue
+		}
+		if strings.Contains(field.Tag.Get("json"), ",inline") {
+			inlineFields := g.processInlineField(field)
+			fields = append(fields, inlineFields...)
+		} else {
+			fieldDef := g.processField(field)
+			fields = append(fields, fieldDef)
+		}
+	}
+
+	typeDef := fmt.Sprintf("export const %sC = t.type({\n%s\n});\n", t.Name(), strings.Join(fields, "\n"))
+	typeDef += fmt.Sprintf("export type %s = t.TypeOf<typeof %sC>;\n\n", t.Name(), t.Name())
+	return typeDef
+}
+
+// processField processes a single field and returns its definition
+func (g *IoTsGenerator) processField(field reflect.StructField) string {
+	jsonTag := field.Tag.Get("json")
 	jsonFieldName := strings.Split(jsonTag, ",")[0]
 
-	isOptional := g.isFieldOptional(field)
-	ioTsType := goTypeToIoTSType(field.Type, isOptional)
+	isOptional := strings.Contains(jsonTag, ",omitempty") || g.isFieldOptional(field)
+	ioTsType := g.typeConverter.Convert(field.Type, isOptional)
 
-	// Handle "omitempty" fields
-	if strings.Contains(jsonTag, ",omitempty") {
-		isOptional = true
-	}
-
-	// Write the field to the io-ts type
-	if isOptional {
-		interfaces.WriteString(fmt.Sprintf("  %s: t.union([%s, t.undefined]),\n", jsonFieldName, ioTsType))
-	} else {
-		interfaces.WriteString(fmt.Sprintf("  %s: %s,\n", jsonFieldName, ioTsType))
-	}
-
-	// Recursively process nested structs
-	if isStructType(field.Type) {
-		g.processStruct(g.dereferenceType(field.Type), interfaces)
-	}
+	return fmt.Sprintf("  %s: %s,", jsonFieldName, ioTsType)
 }
 
-// goTypeToIoTSType converts a Go type to its corresponding io-ts type
-func goTypeToIoTSType(goType reflect.Type, isOptional bool) string {
-	// Special case for map[string]interface{}
-	if goType.Kind() == reflect.Map && goType.Key().Kind() == reflect.String && goType.Elem().Kind() == reflect.Interface {
-		return "t.record(t.string, t.unknown)"
-	}
+// processInlineField processes an inlined field and returns its fields
+func (g *IoTsGenerator) processInlineField(field reflect.StructField) []string {
+	fieldType := dereferenceType(field.Type)
+	var fields []string
 
-	switch goType.Kind() {
-	case reflect.String:
-		return "t.string"
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Float64, reflect.Float32:
-		return "t.number"
-	case reflect.Bool:
-		return "t.boolean"
-	case reflect.Slice, reflect.Array:
-		// Check if the slice's element type is a pointer
-		elementType := goType.Elem()
-		if elementType.Kind() == reflect.Ptr {
-			return fmt.Sprintf("t.array(t.union([%s, t.undefined]))", goTypeToIoTSType(elementType.Elem(), false))
+	for i := 0; i < fieldType.NumField(); i++ {
+		inlineField := fieldType.Field(i)
+		if g.shouldSkipField(inlineField) {
+			continue
 		}
-		return fmt.Sprintf("t.array(%s)", goTypeToIoTSType(elementType, false))
-	case reflect.Ptr:
-		return goTypeToIoTSType(goType.Elem(), true)
-	case reflect.Struct:
-		return fmt.Sprintf("%sC", goType.Name())
-	default:
-		return "t.unknown"
+		if strings.Contains(inlineField.Tag.Get("json"), ",inline") {
+			inlineFields := g.processInlineField(inlineField)
+			fields = append(fields, inlineFields...)
+		} else {
+			fieldDef := g.processField(inlineField)
+			fields = append(fields, fieldDef)
+		}
 	}
+
+	return fields
 }
 
-// isFieldOptional determines if a field should be optional in io-ts (if it's a pointer or array)
+// generateInlineStruct generates an inline type for anonymous structs
+func (g *IoTsGenerator) generateInlineStruct(t reflect.Type) string {
+	fields := g.generateInlineStructFields(t)
+	return fmt.Sprintf("t.type({\n%s\n})", strings.Join(fields, "\n"))
+}
+
+// generateInlineStructFields collects field definitions from a struct, including embedded fields
+func (g *IoTsGenerator) generateInlineStructFields(t reflect.Type) []string {
+	var fields []string
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		if g.shouldSkipField(field) {
+			continue
+		}
+
+		if field.Anonymous {
+			// Embedded field, include its fields recursively
+			embeddedType := dereferenceType(field.Type)
+			if isStructType(embeddedType) {
+				embeddedFields := g.generateInlineStructFields(embeddedType)
+				fields = append(fields, embeddedFields...)
+			} else {
+				// Not a struct, treat as a regular field
+				fieldDef := g.processField(field)
+				fields = append(fields, fieldDef)
+			}
+		} else {
+			fieldDef := g.processField(field)
+			fields = append(fields, fieldDef)
+		}
+	}
+
+	return fields
+}
+
+// isFieldOptional determines if a field should be optional in io-ts
 func (g *IoTsGenerator) isFieldOptional(field reflect.StructField) bool {
 	fieldType := field.Type
 
-	// Mark arrays as optional if the option is set
 	if (fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array) && g.options.TreatArraysAsOptional {
 		return true
 	}
 
-	// Mark pointers as optional
-	if fieldType.Kind() == reflect.Ptr {
-		return true
+	return fieldType.Kind() == reflect.Ptr
+}
+
+// shouldSkipField determines if a field should be skipped
+func (g *IoTsGenerator) shouldSkipField(field reflect.StructField) bool {
+	// Always include anonymous fields (embedded structs)
+	if field.Anonymous {
+		return false
 	}
-
-	return false
+	jsonTag := field.Tag.Get("json")
+	return jsonTag == "" || jsonTag == "-"
 }
 
-// Helper methods for struct processing
+// Helper functions
 
-func (g *IoTsGenerator) isStructProcessed(t reflect.Type) bool {
-	return g.generatedStructs[t.Name()]
+func wrapOptional(ioTsType string, isOptional bool) string {
+	if isOptional {
+		return fmt.Sprintf("t.union([%s, t.undefined])", ioTsType)
+	}
+	return ioTsType
 }
 
-func (g *IoTsGenerator) markStructProcessed(t reflect.Type) {
-	g.generatedStructs[t.Name()] = true
+func getTypeKey(t reflect.Type) string {
+	return t.PkgPath() + "." + t.Name()
 }
 
-func (g *IoTsGenerator) dereferenceType(t reflect.Type) reflect.Type {
-	if t.Kind() == reflect.Ptr {
-		return t.Elem()
+func dereferenceType(t reflect.Type) reflect.Type {
+	for t.Kind() == reflect.Ptr {
+		t = t.Elem()
 	}
 	return t
 }
 
-// isStructType checks if the given type is a struct or a pointer to a struct
 func isStructType(t reflect.Type) bool {
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
+	t = dereferenceType(t)
 	return t.Kind() == reflect.Struct
 }

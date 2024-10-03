@@ -1,7 +1,7 @@
 package generators_test
 
 import (
-	usecase2 "github.com/VictorMarcolino/golang-struct-to-io-ts/generators"
+	"github.com/VictorMarcolino/golang-struct-to-io-ts/generators"
 	"github.com/VictorMarcolino/golang-struct-to-io-ts/utils"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -13,7 +13,7 @@ var _ = Describe("IO-TS:Simple Cases", func() {
 			Age int `json:"age"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -28,7 +28,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Name string `json:"name"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -43,7 +43,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			IsActive bool `json:"is_active"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -58,7 +58,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Price float64 `json:"price"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -73,7 +73,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Count uint `json:"count"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -88,7 +88,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			ZipCode *string `json:"zip_code"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -103,7 +103,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Score *int `json:"score"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -118,7 +118,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Tags []string `json:"tags"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -133,7 +133,7 @@ export type SimpleCase = t.TypeOf<typeof SimpleCaseC>;`
 			Scores []*int `json:"scores"`
 		}
 		user := SimpleCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 		expected := `import * as t from 'io-ts';
 
@@ -154,7 +154,7 @@ var _ = Describe("IO-TS:Nested Cases", func() {
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -183,7 +183,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -212,7 +212,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -241,7 +241,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -270,7 +270,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -299,7 +299,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -328,7 +328,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -357,7 +357,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -386,7 +386,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -402,6 +402,7 @@ export const NestedCaseFatherC = t.type({
 });
 export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 `
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -415,7 +416,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -445,7 +446,7 @@ export type NestedCaseFather = t.TypeOf<typeof NestedCaseFatherC>;
 		}
 
 		user := NestedCaseFather{}
-		generator := usecase2.NewIoTsGenerator(usecase2.TypeScriptGeneratorOptions{
+		generator := generators.NewIoTsGenerator(generators.TypeScriptGeneratorOptions{
 			TreatArraysAsOptional: true,
 		})
 		result, err := generator.Generate(user)
@@ -512,7 +513,7 @@ var _ = Describe("IO-TS:Complex Cases", func() {
 		}
 
 		user := Character{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -563,7 +564,7 @@ export const CharacterC = t.type({
 });
 export type Character = t.TypeOf<typeof CharacterC>;
 `
-
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
@@ -577,7 +578,7 @@ var _ = Describe("IO-TS:Special Cases", func() {
 			Data map[string]interface{} `json:"data"`
 		}
 		user := SpecialCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -597,7 +598,7 @@ export type SpecialCase = t.TypeOf<typeof SpecialCaseC>;
 			Data map[string]interface{} `json:"data,omitempty"`
 		}
 		user := SpecialCase{}
-		generator := usecase2.NewIoTsGenerator()
+		generator := generators.NewIoTsGenerator()
 		result, err := generator.Generate(user)
 
 		expected := `
@@ -609,6 +610,191 @@ export const SpecialCaseC = t.type({
 export type SpecialCase = t.TypeOf<typeof SpecialCaseC>;
 `
 
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+})
+
+var _ = Describe("IO-TS:Special Inline Nested Cases", func() {
+
+	It("should generate correct io-ts type for a struct with inline nested structs and optional fields", func() {
+		type Attributes struct {
+			Strength     int  `json:"strength"`
+			Agility      *int `json:"agility,omitempty"` // Optional
+			Intelligence int  `json:"intelligence"`
+		}
+
+		type Inventory struct {
+			Gold    int        `json:"gold"`
+			Items   []string   `json:"items"`
+			Weapons []struct { // Inline weapons struct
+				Name      string `json:"name"`
+				Damage    int    `json:"damage"`
+				Enchanted bool   `json:"enchanted"`
+			} `json:"weapons"`
+		}
+
+		type Character struct {
+			Name       string     `json:"name"`
+			Attributes Attributes `json:",inline"` // This struct is inlined
+			Inventory  Inventory  `json:",inline"` // This struct is inlined
+		}
+
+		user := Character{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(user)
+
+		expected := `
+import * as t from 'io-ts';
+
+export const CharacterC = t.type({
+  name: t.string,
+  strength: t.number,
+  agility: t.union([t.number, t.undefined]),
+  intelligence: t.number,
+  gold: t.number,
+  items: t.array(t.string),
+  weapons: t.array(t.type({
+    name: t.string,
+    damage: t.number,
+    enchanted: t.boolean,
+  })),
+});
+export type Character = t.TypeOf<typeof CharacterC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+
+	It("should generate correct io-ts type for deeply nested inline structs", func() {
+		type Attributes struct {
+			Strength int  `json:"strength"`
+			Agility  *int `json:"agility,omitempty"`
+		}
+
+		type Weapon struct {
+			Name   string `json:"name"`
+			Damage int    `json:"damage"`
+		}
+
+		type Inventory struct {
+			Gold    int      `json:"gold"`
+			Weapons []Weapon `json:"weapons"` // Non-inline nested struct
+		}
+
+		type Equipment struct {
+			Armor  string `json:"armor"`
+			Shield string `json:"shield"`
+		}
+
+		type Character struct {
+			Name       string     `json:"name"`
+			Attributes Attributes `json:",inline"` // Inlined
+			Inventory  Inventory  `json:",inline"` // Inlined
+			Equipment  Equipment  `json:",inline"` // Inlined nested structs
+		}
+
+		user := Character{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(user)
+
+		expected := `
+import * as t from 'io-ts';
+
+export const WeaponC = t.type({
+	name: t.string,
+	damage: t.number,
+});
+export type Weapon = t.TypeOf<typeof WeaponC>;
+
+export const CharacterC = t.type({
+	name: t.string,
+	strength: t.number,
+	agility: t.union([t.number, t.undefined]),
+	gold: t.number,
+	weapons: t.array(WeaponC),
+	armor: t.string,
+	shield: t.string,
+});
+export type Character = t.TypeOf<typeof CharacterC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+
+	It("should generate correct io-ts type for nested structs with array of inlined structs", func() {
+		type Quest struct {
+			Title       string `json:"title"`
+			IsCompleted bool   `json:"is_completed"`
+		}
+
+		type Character struct {
+			Name   string     `json:"name"`
+			Quests []struct { // Inlined quests array with struct
+				Quest
+				Reward string `json:"reward"`
+			} `json:"quests"`
+		}
+
+		user := Character{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(user)
+
+		expected := `
+import * as t from 'io-ts';
+
+export const CharacterC = t.type({
+  name: t.string,
+  quests: t.array(t.type({
+    title: t.string,
+    is_completed: t.boolean,
+    reward: t.string,
+  })),
+});
+export type Character = t.TypeOf<typeof CharacterC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+
+	It("should generate correct io-ts type for struct with multiple inline levels", func() {
+		type Location struct {
+			City  string `json:"city"`
+			State string `json:"state"`
+		}
+
+		type Residence struct {
+			Home struct {
+				Address  string   `json:"address"`
+				Location Location `json:",inline"` // Inlined location inside residence
+			} `json:",inline"` // Inlined home inside residence
+		}
+
+		type Person struct {
+			Name      string    `json:"name"`
+			Residence Residence `json:",inline"` // Inlined residence inside person
+		}
+
+		user := Person{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(user)
+
+		expected := `
+import * as t from 'io-ts';
+
+export const PersonC = t.type({
+  name: t.string,
+  address: t.string,
+  city: t.string,
+  state: t.string,
+});
+export type Person = t.TypeOf<typeof PersonC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
 		Expect(err).To(BeNil())
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})

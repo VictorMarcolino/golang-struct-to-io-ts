@@ -226,6 +226,23 @@ func (g *IoTsGenerator) processField(field reflect.StructField) string {
 	jsonFieldName := strings.Split(jsonTag, ",")[0]
 
 	isOptional := strings.Contains(jsonTag, ",omitempty") || g.isFieldOptional(field)
+
+	fieldType := dereferenceType(field.Type)
+	if IsEnumType(fieldType) {
+		// Ensure the enum is generated if it hasn't been yet
+		g.generateEnumType(fieldType)
+
+		// Reference the generated union type, e.g. `ValidateSeverityC`
+		ioTsType := fmt.Sprintf("%sC", fieldType.Name())
+
+		// If optional, wrap in union with t.undefined
+		if isOptional {
+			ioTsType = fmt.Sprintf("t.union([%s, t.undefined])", ioTsType)
+		}
+		return fmt.Sprintf("  %s: %s,", jsonFieldName, ioTsType)
+	}
+
+	// Otherwise, use the normal conversion logic
 	ioTsType := g.typeConverter.Convert(field.Type, isOptional)
 
 	return fmt.Sprintf("  %s: %s,", jsonFieldName, ioTsType)
@@ -333,4 +350,15 @@ func dereferenceType(t reflect.Type) reflect.Type {
 func isStructType(t reflect.Type) bool {
 	t = dereferenceType(t)
 	return t.Kind() == reflect.Struct
+}
+
+// generateEnumType generates the io-ts type for an enum and adds it to the builder.
+func (g *IoTsGenerator) generateEnumType(t reflect.Type) {
+	if g.codeBuilder.IsTypeProcessed(getTypeKey(t)) {
+		return
+	}
+	// For some reason code is not reaching this point
+	iotsText := GetIoTsEnumText(t)
+	g.codeBuilder.AddTypeDefinition(iotsText)
+	g.codeBuilder.MarkTypeProcessed(getTypeKey(t))
 }

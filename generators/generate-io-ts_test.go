@@ -1,6 +1,7 @@
 package generators_test
 
 import (
+	"github.com/VictorMarcolino/golang-struct-to-io-ts/fixtures"
 	"github.com/VictorMarcolino/golang-struct-to-io-ts/generators"
 	"github.com/VictorMarcolino/golang-struct-to-io-ts/utils"
 	. "github.com/onsi/ginkgo/v2"
@@ -793,6 +794,47 @@ export const PersonC = t.type({
   state: t.string,
 });
 export type Person = t.TypeOf<typeof PersonC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+
+	It("should generate correct io-ts type for enumerates", func() {
+		someStruct := fixtures.Example{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(someStruct)
+
+		expected := `
+import * as t from 'io-ts';
+
+export const ExampleStringExampleString1 = "1" as const;
+export const ExampleStringExampleString3 = "3" as const;
+export const ExampleStringExampleStringTwo = "2" as const;
+
+export const ExampleStringC = t.union([
+t.literal(ExampleStringExampleString1),
+t.literal(ExampleStringExampleString3),
+t.literal(ExampleStringExampleStringTwo)
+]);
+
+export type ExampleString = t.TypeOf<typeof ExampleStringC>;
+
+export const ExampleIntCode1 = 1 as const;
+export const ExampleIntCodeTwo = 2 as const;
+
+export const ExampleIntC = t.union([
+t.literal(ExampleIntCode1),
+t.literal(ExampleIntCodeTwo)
+]);
+
+export type ExampleInt = t.TypeOf<typeof ExampleIntC>;
+
+export const ExampleC = t.type({
+  exampleString: ExampleStringC,
+  exampleInt: ExampleIntC,
+});
+export type Example = t.TypeOf<typeof ExampleC>;
 `
 		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
 		Expect(err).To(BeNil())

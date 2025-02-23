@@ -82,22 +82,30 @@ func (tc *DefaultTypeConverter) Convert(goType reflect.Type, isOptional bool) st
 	}
 
 	var ioTsType string
-
+	if IsEnumType(goType) {
+		tc.generator.generateEnumType(goType)
+		ioTsType = fmt.Sprintf("%sC", goType.Name())
+		return wrapOptional(ioTsType, isOptional)
+	}
 	switch goType.Kind() {
 	case reflect.String:
 		ioTsType = "t.string"
+		break
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
 		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
 		reflect.Float32, reflect.Float64:
 		ioTsType = "t.number"
+		break
 	case reflect.Bool:
 		ioTsType = "t.boolean"
+		break
 	case reflect.Slice, reflect.Array:
 		elementType := goType.Elem()
 		// Check if the element is a pointer
 		isElementOptional := elementType.Kind() == reflect.Ptr
 		elementIoTsType := tc.Convert(elementType, isElementOptional)
 		ioTsType = fmt.Sprintf("t.array(%s)", elementIoTsType)
+		break
 	case reflect.Struct:
 		typeName := goType.Name()
 		if typeName == "" {
@@ -108,6 +116,7 @@ func (tc *DefaultTypeConverter) Convert(goType reflect.Type, isOptional bool) st
 			tc.generator.processStruct(goType)
 			ioTsType = fmt.Sprintf("%sC", typeName)
 		}
+		break
 	default:
 		ioTsType = "t.unknown"
 	}

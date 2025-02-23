@@ -833,6 +833,8 @@ export type ExampleInt = t.TypeOf<typeof ExampleIntC>;
 export const ExampleC = t.type({
   exampleString: ExampleStringC,
   exampleInt: ExampleIntC,
+  exampleIntArray: t.array(ExampleIntC),
+  exampleStringArray: t.array(ExampleStringC),
 });
 export type Example = t.TypeOf<typeof ExampleC>;
 `

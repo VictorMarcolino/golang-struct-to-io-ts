@@ -16,6 +16,8 @@ const (
 )
 
 type Example struct {
-	ExampleString ExampleString `json:"exampleString"`
-	ExampleInt    ExampleInt    `json:"exampleInt"`
+	ExampleString      ExampleString   `json:"exampleString"`
+	ExampleInt         ExampleInt      `json:"exampleInt"`
+	ExampleIntArray    []ExampleInt    `json:"exampleIntArray"`
+	ExampleStringArray []ExampleString `json:"exampleStringArray"`
 }

@@ -856,7 +856,9 @@ export const RecursionExampleC = t.recursion(
   'RecursionExample',
   Self =>
     t.type({
-      recursionExample: t.union([Self, t.null]),
+      recursionExample: t.union([Self, t.undefined]),
+      recursionExampleArrayOfPointers: t.array(t.union([Self, t.undefined])),
+      recursionExampleArray: t.array(Self),
       exampleString: t.string,
       exampleInt: t.number,
     }),

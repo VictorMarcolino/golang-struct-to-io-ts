@@ -23,9 +23,11 @@ type Example struct {
 }
 
 type RecursionExample struct {
-	RecursionExample *RecursionExample `json:"recursionExample"`
-	ExampleString    string            `json:"exampleString"`
-	ExampleInt       int               `json:"exampleInt"`
+	RecursionExample                *RecursionExample   `json:"recursionExample"`
+	RecursionExampleArrayOfPointers []*RecursionExample `json:"recursionExampleArrayOfPointers"`
+	RecursionExampleArray           []RecursionExample  `json:"recursionExampleArray"`
+	ExampleString                   string              `json:"exampleString"`
+	ExampleInt                      int                 `json:"exampleInt"`
 }
 
 type AtExample struct {

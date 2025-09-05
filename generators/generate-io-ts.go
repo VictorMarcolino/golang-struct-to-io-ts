@@ -228,12 +228,32 @@ func (g *IoTsGenerator) generateIoTsType(t reflect.Type) string {
 			jsonTag := field.Tag.Get("json")
 			jsonFieldName := strings.Split(jsonTag, ",")[0]
 
-			fieldType := dereferenceType(field.Type)
-			// Self-referential field -> use Self and t.null (pointer => nullable)
-			if getTypeKey(fieldType) == getTypeKey(t) {
-				fieldLines = append(fieldLines, fmt.Sprintf("      %s: t.union([Self, t.null]),", formatPropertyName(jsonFieldName)))
+			// Work with the raw type to preserve pointer/collection info for Self detection
+			rawType := field.Type
+			deref := dereferenceType(rawType)
+			selfKey := getTypeKey(t)
+
+			// Pointer to self => union with t.undefined (optional)
+			if rawType.Kind() == reflect.Ptr && getTypeKey(deref) == selfKey {
+				fieldLines = append(fieldLines, fmt.Sprintf("      %s: t.union([Self, t.undefined]),", formatPropertyName(jsonFieldName)))
 				continue
 			}
+			// Slice/array cases that reference self
+			if rawType.Kind() == reflect.Slice || rawType.Kind() == reflect.Array {
+				el := rawType.Elem()
+				elDeref := dereferenceType(el)
+				if el.Kind() == reflect.Ptr && getTypeKey(elDeref) == selfKey {
+					// []*Self -> t.array(t.union([Self, t.undefined]))
+					fieldLines = append(fieldLines, fmt.Sprintf("      %s: t.array(t.union([Self, t.undefined])),", formatPropertyName(jsonFieldName)))
+					continue
+				}
+				if getTypeKey(elDeref) == selfKey {
+					// []Self -> t.array(Self)
+					fieldLines = append(fieldLines, fmt.Sprintf("      %s: t.array(Self),", formatPropertyName(jsonFieldName)))
+					continue
+				}
+			}
+
 			// Inline fields are not expected to be self in recursion test, but handle generically
 			if strings.Contains(jsonTag, ",inline") {
 				inlineFields := g.processInlineField(field)
@@ -248,7 +268,7 @@ func (g *IoTsGenerator) generateIoTsType(t reflect.Type) string {
 			fieldLines = append(fieldLines, fmt.Sprintf("      %s: %s,", formatPropertyName(jsonFieldName), ioTsType))
 		}
 
-		// Build the recursion block (note: no semicolons at end to match expected formatting)
+		// Build the recursion block
 		typeDef := fmt.Sprintf("export const %sC = t.recursion(\n  '%s',\n  Self =>\n    t.type({\n%s\n    }),\n);\n\n", t.Name(), t.Name(), strings.Join(fieldLines, "\n"))
 		typeDef += fmt.Sprintf("export type %s = t.TypeOf<typeof %sC>;\n", t.Name(), t.Name())
 		return typeDef

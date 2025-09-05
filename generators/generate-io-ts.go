@@ -183,6 +183,11 @@ func (g *IoTsGenerator) processNestedStructs(t reflect.Type) {
 
 		fieldType := dereferenceType(field.Type)
 
+		// Avoid infinite recursion: skip processing if the field type is the same as the parent type
+		if getTypeKey(fieldType) == getTypeKey(t) {
+			continue
+		}
+
 		if isStructType(fieldType) {
 			if strings.Contains(field.Tag.Get("json"), ",inline") {
 				g.processNestedStructs(fieldType)
@@ -194,6 +199,10 @@ func (g *IoTsGenerator) processNestedStructs(t reflect.Type) {
 			}
 		} else if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
 			elementType := dereferenceType(fieldType.Elem())
+			// Avoid infinite recursion for slices/arrays of the same type
+			if getTypeKey(elementType) == getTypeKey(t) {
+				continue
+			}
 			if isStructType(elementType) {
 				if elementType.Name() == "" {
 					// Anonymous struct
@@ -208,8 +217,45 @@ func (g *IoTsGenerator) processNestedStructs(t reflect.Type) {
 
 // generateIoTsType generates the io-ts type for a struct and returns it as a string
 func (g *IoTsGenerator) generateIoTsType(t reflect.Type) string {
-	var fields []string
+	// If the struct is recursive (contains a field of its own type), emit a t.recursion wrapper
+	if isRecursiveStruct(t) {
+		var fieldLines []string
+		for i := 0; i < t.NumField(); i++ {
+			field := t.Field(i)
+			if g.shouldSkipField(field) {
+				continue
+			}
+			jsonTag := field.Tag.Get("json")
+			jsonFieldName := strings.Split(jsonTag, ",")[0]
 
+			fieldType := dereferenceType(field.Type)
+			// Self-referential field -> use Self and t.null (pointer => nullable)
+			if getTypeKey(fieldType) == getTypeKey(t) {
+				fieldLines = append(fieldLines, fmt.Sprintf("      %s: t.union([Self, t.null]),", formatPropertyName(jsonFieldName)))
+				continue
+			}
+			// Inline fields are not expected to be self in recursion test, but handle generically
+			if strings.Contains(jsonTag, ",inline") {
+				inlineFields := g.processInlineField(field)
+				for _, f := range inlineFields {
+					fieldLines = append(fieldLines, "      "+strings.TrimSpace(f))
+				}
+				continue
+			}
+			// Use normal conversion for other fields
+			isOptional := strings.Contains(jsonTag, ",omitempty") || g.isFieldOptional(field)
+			ioTsType := g.typeConverter.Convert(field.Type, isOptional)
+			fieldLines = append(fieldLines, fmt.Sprintf("      %s: %s,", formatPropertyName(jsonFieldName), ioTsType))
+		}
+
+		// Build the recursion block (note: no semicolons at end to match expected formatting)
+		typeDef := fmt.Sprintf("export const %sC = t.recursion(\n  '%s',\n  Self =>\n    t.type({\n%s\n    }),\n);\n\n", t.Name(), t.Name(), strings.Join(fieldLines, "\n"))
+		typeDef += fmt.Sprintf("export type %s = t.TypeOf<typeof %sC>;\n", t.Name(), t.Name())
+		return typeDef
+	}
+
+	// Non-recursive: default behavior
+	var fields []string
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		if g.shouldSkipField(field) {
@@ -254,7 +300,7 @@ func (g *IoTsGenerator) processField(field reflect.StructField) string {
 	// Otherwise, use the normal conversion logic
 	ioTsType := g.typeConverter.Convert(field.Type, isOptional)
 
-	return fmt.Sprintf("  %s: %s,", jsonFieldName, ioTsType)
+	return fmt.Sprintf("  %s: %s,", formatPropertyName(jsonFieldName), ioTsType)
 }
 
 // processInlineField processes an inlined field and returns its fields
@@ -356,9 +402,55 @@ func dereferenceType(t reflect.Type) reflect.Type {
 	return t
 }
 
+// formatPropertyName returns a valid TypeScript object key for property name.
+// If name is a valid identifier, it returns as-is. Otherwise, it single-quotes and escapes it.
+func formatPropertyName(name string) string {
+	if name == "" {
+		return "''"
+	}
+	isIdent := true
+	for i, r := range name {
+		if i == 0 {
+			if !((r == '_') || (r == '$') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
+				isIdent = false
+				break
+			}
+		} else {
+			if !((r == '_') || (r == '$') || (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9')) {
+				isIdent = false
+				break
+			}
+		}
+	}
+	if isIdent {
+		return name
+	}
+	escaped := strings.ReplaceAll(name, "\\", "\\\\")
+	escaped = strings.ReplaceAll(escaped, "'", "\\'")
+	return fmt.Sprintf("'%s'", escaped)
+}
+
 func isStructType(t reflect.Type) bool {
 	t = dereferenceType(t)
 	return t.Kind() == reflect.Struct
+}
+
+// isRecursiveStruct checks whether the struct has a field that refers to its own type (directly or via pointer)
+func isRecursiveStruct(t reflect.Type) bool {
+	for i := 0; i < t.NumField(); i++ {
+		fieldType := dereferenceType(t.Field(i).Type)
+		if getTypeKey(fieldType) == getTypeKey(t) {
+			return true
+		}
+		// Check slices/arrays of the same type
+		if fieldType.Kind() == reflect.Slice || fieldType.Kind() == reflect.Array {
+			elem := dereferenceType(fieldType.Elem())
+			if getTypeKey(elem) == getTypeKey(t) {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // generateEnumType generates the io-ts type for an enum and adds it to the builder.

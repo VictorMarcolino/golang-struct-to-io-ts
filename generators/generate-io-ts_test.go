@@ -843,3 +843,45 @@ export type Example = t.TypeOf<typeof ExampleC>;
 		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
 	})
 })
+
+var _ = Describe("IO-TS:Special Cases", func() {
+	It("should generate correct io-ts type for recursion", func() {
+		someStruct := fixtures.RecursionExample{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(someStruct)
+		expected := `
+import * as t from 'io-ts';
+
+export const RecursionExampleC = t.recursion(
+  'RecursionExample',
+  Self =>
+    t.type({
+      recursionExample: t.union([Self, t.null]),
+      exampleString: t.string,
+      exampleInt: t.number,
+    }),
+);
+export type RecursionExample = t.TypeOf<typeof RecursionExampleC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+
+	It("Using @ on names should be okay.", func() {
+		someStruct := fixtures.AtExample{}
+		generator := generators.NewIoTsGenerator()
+		result, err := generator.Generate(someStruct)
+		expected := `
+import * as t from 'io-ts';
+
+export const AtExampleC = t.type({
+'@atExample': t.string,
+});
+export type AtExample = t.TypeOf<typeof AtExampleC>;
+`
+		GinkgoWriter.Println("Detailed expected:\n", expected, "\n________________________\nDetailed result:\n", result)
+		Expect(err).To(BeNil())
+		Expect(utils.NormalizeWhitespace(result)).To(Equal(utils.NormalizeWhitespace(expected)))
+	})
+})

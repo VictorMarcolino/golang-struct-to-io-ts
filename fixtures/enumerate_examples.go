@@ -21,3 +21,13 @@ type Example struct {
 	ExampleIntArray    []ExampleInt    `json:"exampleIntArray"`
 	ExampleStringArray []ExampleString `json:"exampleStringArray"`
 }
+
+type RecursionExample struct {
+	RecursionExample *RecursionExample `json:"recursionExample"`
+	ExampleString    string            `json:"exampleString"`
+	ExampleInt       int               `json:"exampleInt"`
+}
+
+type AtExample struct {
+	AtExample string `json:"@atExample"`
+}
